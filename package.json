@@ -12,8 +12,7 @@
   "dependencies": {
     "crypto": "0.0.3",
     "good-guy-http": "1.7.3",
-    "lodash": "4.17.2",
-    "proxyquire": "1.7.10"
+    "lodash": "4.17.2"
   },
   "devDependencies": {
     "chai": "3.5.0",

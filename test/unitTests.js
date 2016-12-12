@@ -1,6 +1,6 @@
 const chai = require('chai')
 const assert = chai.assert
-const proxyquire = require('proxyquire')
+const logEntresto = require('../lib/logEntresto')
 
 
 describe('LogEntresto base usage', () => {
@@ -14,17 +14,16 @@ describe('LogEntresto base usage', () => {
     const serverConfigurationMock = [{name: 'tag1', id: 1}, {name: 'tag2', id: 2},
                                      {name: 'tag3', id: 3}, {name: 'tag4', id: 4}]
 
-    const tagsRequestsStub = () => ({
+    const tagsRequestsStub = {
         getAllTags: () =>  Promise.resolve({body: JSON.stringify({tags: serverConfigurationMock})}),
         createTag: tag => Promise.resolve({action: 'create', content: tag}),
         updateTag: tag => Promise.resolve({action: 'update', content: tag}),
         deleteTag: tagId => Promise.resolve({action: 'delete', content: tagId})
-    })
+    }
 
-    const logEntresto = proxyquire('../lib/logEntresto', {'./tagsRequests': tagsRequestsStub})
 
     it('should create tags that are not included in user configuration', done => {
-        logEntresto(userConfigurationMock)
+        logEntresto(userConfigurationMock, true, false, false, {tagsRequests: tagsRequestsStub})
             .then(result => {
                 assert.deepEqual(result, [ { result: { action: 'create', content: {name: "tag5"} },
                                              status: 'resolved' },
@@ -36,7 +35,7 @@ describe('LogEntresto base usage', () => {
     })
 
     it('should update tags that are included in both user and server configuration', done => {
-        logEntresto(userConfigurationMock, false, true)
+        logEntresto(userConfigurationMock, false, true, false, {tagsRequests: tagsRequestsStub})
             .then(result => {
                 assert.deepEqual(result, [
                     { result: { action: 'update', content: {id: 3, name: "tag3"} }, status: 'resolved' },
@@ -48,7 +47,7 @@ describe('LogEntresto base usage', () => {
     })
 
     it('should delete tags that are included in server configuration and not in user configuration', done => {
-        logEntresto(userConfigurationMock, false, false, true)
+        logEntresto(userConfigurationMock, false, false, true, {tagsRequests: tagsRequestsStub})
             .then(result => {
                 assert.deepEqual(result, [
                     { result: { action: 'delete', content: 1 }, status: 'resolved' },
@@ -60,7 +59,7 @@ describe('LogEntresto base usage', () => {
     })
 
     it('should handle create/update/delete operations at once', done => {
-        logEntresto(userConfigurationMock, true, true, true)
+        logEntresto(userConfigurationMock, true, true, true, {tagsRequests: tagsRequestsStub})
             .then(result => {
                 assert.deepEqual(result, [
                     { result: { action: 'create', content: {name: "tag5"} }, status: 'resolved' },
